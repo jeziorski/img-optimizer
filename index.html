@@ -151,7 +151,7 @@
                 <span class="font-bold text-lg tracking-tight">Webly Mate <span class="font-normal text-secondary">/ Optimizer</span></span>
             </div>
             <div class="hidden md:block text-xs font-medium px-3 py-1 bg-background rounded border border-accent text-secondary">
-                v2.0 Pro
+                v2.1
             </div>
         </div>
     </nav>
@@ -204,7 +204,7 @@
                 <div class="mb-8">
                     <h2 class="text-lg font-semibold text-primary mb-4 flex items-center gap-3">
                         <span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span> 
-                        Parametry
+                        Parametry i Nazewnictwo
                     </h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -234,6 +234,21 @@
                                 </select>
                                 <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-xs text-secondary pointer-events-none"></i>
                             </div>
+                        </div>
+
+                        <!-- Nowe Pole: Nazewnictwo -->
+                        <div class="md:col-span-2">
+                             <label class="block text-sm font-medium text-primary mb-2">Nazewnictwo plików wynikowych</label>
+                             <div class="relative">
+                                 <select id="namingSelect" class="webly-select appearance-none">
+                                     <option value="original">Zachowaj oryginalne nazwy (np. IMG_2024.jpg)</option>
+                                     <option value="numbered">Numeracja sekwencyjna (1.jpg, 2.jpg, 3.jpg...)</option>
+                                 </select>
+                                 <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-xs text-secondary pointer-events-none"></i>
+                             </div>
+                             <p class="text-[10px] text-secondary mt-1">
+                                 Numeracja jest nadawana zgodnie z kolejnością plików na liście.
+                             </p>
                         </div>
                     </div>
 
@@ -349,7 +364,7 @@
         </div>
     </footer>
 
-    <!-- Logic Script (Preserved Logic, Updated UI Selectors if needed) -->
+    <!-- Logic Script -->
     <script>
         // --- ZMIENNE ---
         const dropZone = document.getElementById('drop-zone');
@@ -361,6 +376,7 @@
 
         const formatSelect = document.getElementById('formatSelect');
         const resizeSelect = document.getElementById('resizeSelect');
+        const namingSelect = document.getElementById('namingSelect'); // NOWE
         const qualityRange = document.getElementById('qualityRange');
         const qualityValue = document.getElementById('qualityValue');
 
@@ -568,6 +584,9 @@
             const useLogo = logoCheck.checked && userLogoImg;
             const logoPos = logoPosition.value;
             const resizeMode = resizeSelect.value;
+            
+            // POBRANIE TRYBU NAZEWNICTWA
+            const namingMode = namingSelect.value;
 
             let ext = ".jpg";
             if (format === "image/webp") ext = ".webp";
@@ -581,8 +600,19 @@
                 
                 try {
                     const blob = await processImage(file, format, quality, resizeMode, useLogo, userLogoImg, logoPos);
-                    const oldName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-                    zip.file(`${oldName}${ext}`, blob);
+                    
+                    // --- LOGIKA NAZEWNICTWA ---
+                    let fileName;
+                    if (namingMode === 'numbered') {
+                        // Numeracja sekwencyjna (1, 2, 3...)
+                        fileName = `${i + 1}`;
+                    } else {
+                        // Oryginalna nazwa
+                        fileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                    }
+                    
+                    zip.file(`${fileName}${ext}`, blob);
+
                 } catch (err) {
                     console.error("Błąd pliku:", file.name, err);
                 }
