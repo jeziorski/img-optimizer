@@ -3,189 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PNG to JPG/WebP Optimizer Pro</title>
+    <title>Optymalizator Obrazów - Webly Mate</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Biblioteki -->
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Biblioteki Logiki -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#1a1a1a',
+                        secondary: '#666666',
+                        accent: '#e5e5e5',
+                        background: '#fafafa',
+                        surface: '#ffffff',
+                        success: '#22c55e',
+                        warning: '#f59e0b',
+                        error: '#ef4444',
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        'card-hover': '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .drag-active { border-color: #3b82f6; background-color: #eff6ff; }
-        /* Szachownica dla tła podglądu */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #fafafa;
+            color: #1a1a1a;
+        }
+
+        /* Webly Components */
+        .webly-card {
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .webly-input, .webly-select {
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            width: 100%;
+            background-color: #fff;
+            color: #1a1a1a;
+        }
+        .webly-input:focus, .webly-select:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.05);
+        }
+
+        .btn-primary {
+            background-color: #1a1a1a;
+            color: white;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #333;
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid #e5e5e5;
+            color: #1a1a1a;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        /* Drag Zone Active State */
+        .drag-active {
+            border-color: #1a1a1a !important;
+            background-color: #f5f5f5 !important;
+        }
+
+        /* Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            cursor: pointer;
+            margin-top: -6px; 
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e5e5e5;
+            border-radius: 2px;
+        }
+
+        /* Checkerboard Pattern for Preview */
         .checkerboard {
-            background-color: #eee;
-            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), 
-                              linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+            background-color: #f9f9f9;
+            background-image: 
+                linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), 
+                linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee);
             background-position: 0 0, 10px 10px;
             background-size: 20px 20px;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+<body class="min-h-screen flex flex-col">
 
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- LEWA KOLUMNA: KONTROLKI (2/3 szerokości) -->
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <h1 class="text-2xl font-bold text-gray-800 mb-2 border-b pb-4">
-                    Optymalizator Obrazów Pro
-                </h1>
-                
-                <!-- Ostrzeżenia -->
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-sm text-yellow-800">
-                    <p class="font-bold">⚠️ Uwaga dotycząca wydajności</p>
-                    <p>Przetwarzanie odbywa się w Twojej przeglądarce. Przy setkach zdjęć lub bardzo dużych plikach (RAW/TIFF) przeglądarka może zwolnić. Zalecamy partie do 50-100 zdjęć naraz.</p>
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-accent sticky top-0 z-50">
+        <div class="max-w-[1200px] mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-primary text-white rounded flex items-center justify-center">
+                    <i class="fa-solid fa-layer-group text-sm"></i>
                 </div>
+                <span class="font-bold text-lg tracking-tight">Webly Mate <span class="font-normal text-secondary">/ Optimizer</span></span>
+            </div>
+            <div class="hidden md:block text-xs font-medium px-3 py-1 bg-background rounded border border-accent text-secondary">
+                v2.0 Pro
+            </div>
+        </div>
+    </nav>
 
+    <main class="max-w-[1200px] mx-auto px-4 md:px-6 py-8 md:py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
+        
+        <!-- LEWA KOLUMNA: KONTROLKI -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Warning Alert -->
+            <div class="bg-[#fffbeb] border border-[#fcd34d] text-[#92400e] px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                <div>
+                    <span class="font-semibold block mb-1">Uwaga dotycząca wydajności</span>
+                    Przetwarzanie odbywa się lokalnie w przeglądarce. Przy dużej liczbie zdjęć (>100) zalecamy dzielenie na mniejsze partie.
+                </div>
+            </div>
+
+            <div class="webly-card p-6 md:p-8">
                 <!-- SEKCJA 1: Źródło -->
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span> 
+                    <h2 class="text-lg font-semibold text-primary mb-4 flex items-center gap-3">
+                        <span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span> 
                         Wybór plików
                     </h2>
                     
-                    <div class="flex gap-4 mb-4">
-                        <button id="btnSelectFiles" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 px-4 rounded-lg shadow-sm transition-all text-sm font-semibold">
-                            📄 Wybierz pliki
+                    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                        <button id="btnSelectFiles" class="flex-1 btn-secondary py-2.5 px-4 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
+                            <i class="fa-regular fa-file"></i> Wybierz pliki
                         </button>
-                        <button id="btnSelectFolder" class="flex-1 bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg shadow-sm transition-all text-sm font-semibold">
-                            📁 Wybierz folder (Masowo)
+                        <button id="btnSelectFolder" class="flex-1 btn-secondary py-2.5 px-4 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
+                            <i class="fa-regular fa-folder"></i> Wybierz folder
                         </button>
                     </div>
 
-                    <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-colors hover:border-blue-400 hover:bg-gray-50">
+                    <div id="drop-zone" class="border-2 border-dashed border-[#e5e5e5] rounded-xl p-10 text-center cursor-pointer transition-all hover:bg-[#fafafa] hover:border-[#cccccc] group">
                         <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
                         <input type="file" id="folderInput" webkitdirectory directory class="hidden">
-                        <div class="text-gray-400">
-                            <p class="text-3xl mb-2">📥</p>
-                            <p class="font-medium text-gray-600">Upuść pliki tutaj</p>
-                            <p class="text-sm mt-2" id="fileCount">Nie wybrano plików</p>
+                        <div class="text-secondary group-hover:text-primary transition-colors">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl mb-3"></i>
+                            <p class="font-medium">Upuść pliki tutaj</p>
+                            <p class="text-xs mt-2 text-[#999999]" id="fileCount">Nie wybrano plików</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- SEKCJA 2: Format i Rozmiar -->
+                <div class="w-full h-[1px] bg-accent my-8"></div>
+
+                <!-- SEKCJA 2: Ustawienia -->
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                        <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span> 
-                        Ustawienia wyjściowe
+                    <h2 class="text-lg font-semibold text-primary mb-4 flex items-center gap-3">
+                        <span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span> 
+                        Parametry
                     </h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Format -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Format Pliku</label>
-                            <select id="formatSelect" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white">
-                                <option value="image/jpeg">JPG (Standard)</option>
-                                <option value="image/webp">WebP (Nowoczesny, lżejszy)</option>
-                                <option value="image/avif">AVIF (Najlepsza kompresja)</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">AVIF wymaga nowszej przeglądarki.</p>
+                            <label class="block text-sm font-medium text-primary mb-2">Format Pliku</label>
+                            <div class="relative">
+                                <select id="formatSelect" class="webly-select appearance-none">
+                                    <option value="image/jpeg">JPG (Standard)</option>
+                                    <option value="image/webp">WebP (Zalecany do Web)</option>
+                                    <option value="image/avif">AVIF (Ultra kompresja)</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-xs text-secondary pointer-events-none"></i>
+                            </div>
                         </div>
 
                         <!-- Rozdzielczość -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Rozmiar / Skalowanie</label>
-                            <select id="resizeSelect" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white">
-                                <option value="1920x1080">Full HD (1920x1080) - WWW</option>
-                                <option value="3840x2160">4K UHD (3840x2160)</option>
-                                <option value="1080x1080">Kwadrat (1080x1080) - Instagram</option>
-                                <option value="1080x1350">Portret (1080x1350) - Social</option>
-                                <option value="1200x630">Facebook Link (1200x630)</option>
-                                <option value="original">Oryginalny rozmiar (Bez zmian)</option>
-                            </select>
+                            <label class="block text-sm font-medium text-primary mb-2">Skalowanie</label>
+                            <div class="relative">
+                                <select id="resizeSelect" class="webly-select appearance-none">
+                                    <option value="original">Oryginalny rozmiar</option>
+                                    <option value="1920x1080">Full HD (1920x1080) - WWW</option>
+                                    <option value="3840x2160">4K UHD (3840x2160)</option>
+                                    <option value="1080x1080">Kwadrat (1080x1080) - Social</option>
+                                    <option value="1200x630">Facebook / OG Image</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-xs text-secondary pointer-events-none"></i>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Jakość -->
-                    <div class="mt-4">
-                        <div class="flex justify-between mb-1">
-                            <label class="text-sm font-medium text-gray-700">Jakość kompresji</label>
-                            <span id="qualityValue" class="font-bold text-blue-600 text-sm">75%</span>
+                    <div class="mt-6">
+                        <div class="flex justify-between mb-2">
+                            <label class="text-sm font-medium text-primary">Stopień kompresji</label>
+                            <span id="qualityValue" class="font-mono font-bold text-primary text-sm">75%</span>
                         </div>
-                        <input type="range" id="qualityRange" min="10" max="100" value="75" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <input type="range" id="qualityRange" min="10" max="100" value="75" class="w-full">
+                        <div class="flex justify-between text-[10px] text-secondary mt-1 uppercase tracking-wide">
+                            <span>Max Kompresja</span>
+                            <span>Max Jakość</span>
+                        </div>
                     </div>
                 </div>
 
+                <div class="w-full h-[1px] bg-accent my-8"></div>
+
                 <!-- SEKCJA 3: Logo -->
-                <div class="mb-8 border-t pt-6">
+                <div class="mb-8">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
-                            <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">3</span> 
-                            Znak wodny / Logo
+                        <h2 class="text-lg font-semibold text-primary flex items-center gap-3">
+                            <span class="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">3</span> 
+                            Znak wodny
                         </h2>
-                        <label class="flex items-center space-x-2 cursor-pointer select-none">
-                            <input type="checkbox" id="logoCheck" class="w-5 h-5 text-blue-600 rounded">
-                            <span class="text-gray-700 font-medium">Włącz</span>
+                        <label class="flex items-center space-x-2 cursor-pointer select-none group">
+                            <input type="checkbox" id="logoCheck" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary">
+                            <span class="text-sm font-medium text-primary group-hover:text-secondary transition-colors">Aktywuj</span>
                         </label>
                     </div>
 
-                    <div id="logoOptions" class="opacity-50 pointer-events-none transition-opacity duration-200 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div id="logoOptions" class="opacity-50 pointer-events-none transition-all duration-300 bg-background p-5 rounded-lg border border-accent">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Wybierz plik logo</label>
-                                <input type="file" id="logoInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
+                                <label class="block text-xs uppercase font-semibold text-secondary mb-2">Plik Logo (PNG)</label>
+                                <input type="file" id="logoInput" accept="image/*" class="block w-full text-xs text-secondary
+                                file:mr-3 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-xs file:font-semibold
+                                file:bg-primary file:text-white
+                                hover:file:bg-[#333] cursor-pointer">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Pozycja</label>
-                                <select id="logoPosition" class="w-full p-2 border border-gray-300 rounded-lg bg-white">
-                                    <option value="bottom-right">Prawy Dolny</option>
-                                    <option value="bottom-left">Lewy Dolny</option>
-                                    <option value="top-right">Prawy Górny</option>
-                                    <option value="top-left">Lewy Górny</option>
-                                    <option value="center">Idealny Środek</option>
-                                </select>
+                                <label class="block text-xs uppercase font-semibold text-secondary mb-2">Pozycja</label>
+                                <div class="relative">
+                                    <select id="logoPosition" class="webly-select appearance-none text-sm">
+                                        <option value="bottom-right">Prawy Dolny</option>
+                                        <option value="bottom-left">Lewy Dolny</option>
+                                        <option value="top-right">Prawy Górny</option>
+                                        <option value="top-left">Lewy Górny</option>
+                                        <option value="center">Środek</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-xs text-secondary pointer-events-none"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- START BUTTON -->
-                <button id="processBtn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex justify-center items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span class="text-xl">🚀</span>
-                    <span class="text-lg">Rozpocznij Optymalizację</span>
+                <!-- Action Button -->
+                <button id="processBtn" class="w-full btn-primary py-4 rounded-xl shadow-lg transition-all active:scale-[0.99] flex justify-center items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span class="font-semibold text-base">Rozpocznij Optymalizację</span>
                 </button>
 
-                <!-- Pasek postępu -->
-                <div id="progressContainer" class="hidden mt-6 bg-gray-100 rounded-lg p-4">
-                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                <!-- Progress Bar -->
+                <div id="progressContainer" class="hidden mt-6">
+                    <div class="flex justify-between text-xs font-medium text-primary mb-2">
                         <span id="statusText">Inicjalizacja...</span>
-                        <span id="percentText">0%</span>
+                        <span id="percentText" class="font-mono">0%</span>
                     </div>
-                    <div class="w-full bg-gray-300 rounded-full h-3 overflow-hidden">
-                        <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <div class="w-full bg-[#e5e5e5] rounded-full h-2 overflow-hidden">
+                        <div id="progressBar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                     </div>
                 </div>
 
             </div>
         </div>
 
-        <!-- PRAWA KOLUMNA: PODGLĄD (1/3 szerokości, Sticky) -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-xl shadow-lg p-6 sticky top-6">
-                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    👁️ Podgląd Logo
+        <!-- PRAWA KOLUMNA: PODGLĄD (Sticky) -->
+        <div class="lg:col-span-4">
+            <div class="webly-card p-6 sticky top-24">
+                <h3 class="font-bold text-primary mb-2 flex items-center gap-2">
+                    <i class="fa-regular fa-eye"></i> Podgląd
                 </h3>
-                <p class="text-xs text-gray-500 mb-4">
-                    Poniżej widać przykładową grafikę (placeholder) z nałożonym Twoim logo. Pozwala to sprawdzić pozycję znaku wodnego.
+                <p class="text-xs text-secondary mb-4 leading-relaxed">
+                    Wizualizacja umiejscowienia logo na przykładowym tle. Rzeczywisty efekt zależy od rozmiaru Twoich zdjęć.
                 </p>
 
-                <!-- Kontener Podglądu -->
-                <div class="checkerboard w-full aspect-video rounded-lg border border-gray-300 overflow-hidden relative flex items-center justify-center bg-gray-200">
-                    <canvas id="previewCanvas" class="max-w-full max-h-full shadow-sm"></canvas>
+                <!-- Canvas Container -->
+                <div class="checkerboard w-full aspect-video rounded-lg border border-accent overflow-hidden relative flex items-center justify-center">
+                    <canvas id="previewCanvas" class="max-w-full max-h-full"></canvas>
                 </div>
 
-                <div class="mt-4 text-xs text-gray-400 text-center">
-                    Podgląd odświeża się automatycznie po zmianie ustawień.
+                <div class="mt-4 flex items-center justify-center gap-2 text-[10px] text-[#999999] uppercase tracking-wider">
+                    <i class="fa-solid fa-arrows-rotate"></i> Auto-aktualizacja
                 </div>
             </div>
         </div>
 
-    </div>
+    </main>
 
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-accent mt-auto py-8">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-xs text-secondary">
+                &copy; <script>document.write(new Date().getFullYear())</script> Webly Mate Optimizer. Wszystkie prawa zastrzeżone.
+            </p>
+            <a href="https://weblymate.com" target="_blank" class="text-xs font-medium text-primary hover:text-secondary transition-colors flex items-center gap-1">
+                Odwiedź weblymate.com <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+        </div>
+    </footer>
+
+    <!-- Logic Script (Preserved Logic, Updated UI Selectors if needed) -->
     <script>
         // --- ZMIENNE ---
         const dropZone = document.getElementById('drop-zone');
@@ -217,39 +381,37 @@
         let filesToProcess = [];
         let userLogoImg = null;
 
-        // Placeholder Image (Generowany programowo, żeby nie zależeć od sieci)
+        // Placeholder Image
         const placeholderImg = new Image();
         
-        // Funkcja generująca prosty placeholder tła
         function generatePlaceholder() {
             const canvas = document.createElement('canvas');
             canvas.width = 800;
             canvas.height = 450;
             const ctx = canvas.getContext('2d');
             
-            // Tło gradient
-            const grd = ctx.createLinearGradient(0, 0, 800, 450);
-            grd.addColorStop(0, "#e0e7ff");
-            grd.addColorStop(1, "#f3f4f6");
-            ctx.fillStyle = grd;
+            // Webly Style Placeholder
+            ctx.fillStyle = "#fafafa";
             ctx.fillRect(0, 0, 800, 450);
 
-            // Linie siatki
-            ctx.strokeStyle = "#cbd5e1";
+            // Grid lines
+            ctx.strokeStyle = "#e5e5e5";
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(400, 0); ctx.lineTo(400, 450); // Pion
-            ctx.moveTo(0, 225); ctx.lineTo(800, 225); // Poziom
+            ctx.moveTo(400, 0); ctx.lineTo(400, 450);
+            ctx.moveTo(0, 225); ctx.lineTo(800, 225);
             ctx.stroke();
 
-            // Tekst
-            ctx.fillStyle = "#94a3b8";
-            ctx.font = "bold 30px sans-serif";
+            // Text
+            ctx.fillStyle = "#1a1a1a";
+            ctx.font = "bold 24px Inter, sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText("Przykładowa Grafika", 400, 225);
-            ctx.font = "20px sans-serif";
-            ctx.fillText("Obraz tła (Placeholder)", 400, 260);
+            ctx.fillText("Przykładowe Zdjęcie", 400, 210);
+            
+            ctx.fillStyle = "#666666";
+            ctx.font = "16px Inter, sans-serif";
+            ctx.fillText("(Placeholder Tła)", 400, 240);
 
             placeholderImg.src = canvas.toDataURL();
             placeholderImg.onload = drawPreview;
@@ -257,20 +419,16 @@
 
         // --- OBSŁUGA UI ---
 
-        // Inicjalizacja
         generatePlaceholder();
 
-        // Listenery do odświeżania podglądu
         [resizeSelect, logoCheck, logoPosition].forEach(el => {
             el.addEventListener('change', drawPreview);
         });
 
-        // Suwak jakości
         qualityRange.addEventListener('input', (e) => {
             qualityValue.textContent = e.target.value + '%';
         });
 
-        // Checkbox Logo
         logoCheck.addEventListener('change', (e) => {
             if (e.target.checked) {
                 logoOptions.classList.remove('opacity-50', 'pointer-events-none');
@@ -279,7 +437,6 @@
             }
         });
 
-        // Wczytywanie pliku logo
         logoInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -288,7 +445,7 @@
                     const img = new Image();
                     img.onload = () => { 
                         userLogoImg = img; 
-                        drawPreview(); // Odśwież podgląd po załadowaniu logo
+                        drawPreview(); 
                     };
                     img.src = event.target.result;
                 };
@@ -296,15 +453,8 @@
             }
         });
 
-        // Funkcja rysująca podgląd
         function drawPreview() {
-            // Ustalamy wymiary podglądu (proporcjonalnie do wybranej rozdzielczości)
             const targetDim = getTargetDimensions(placeholderImg.width, placeholderImg.height);
-            
-            // Ustawiamy wielkość canvasa podglądu (skalowaną w dół żeby się zmieściła w UI)
-            // Ale obliczenia pozycji logo robimy na "wirtualnym" pełnym rozmiarze
-            
-            // Prosty trick: Rysujemy na canvasie o stałej szerokości np. 400px, zachowując proporcje celu
             const previewWidth = 400;
             const aspect = targetDim.w / targetDim.h;
             const previewHeight = previewWidth / aspect;
@@ -312,24 +462,18 @@
             previewCanvas.width = previewWidth;
             previewCanvas.height = previewHeight;
 
-            // Rysowanie tła (placeholder)
-            // Używamy "cover" logic dla placeholdera
             const scale = Math.max(previewWidth / placeholderImg.width, previewHeight / placeholderImg.height);
             const x = (previewWidth / 2) - (placeholderImg.width / 2) * scale;
             const y = (previewHeight / 2) - (placeholderImg.height / 2) * scale;
             
             previewCtx.drawImage(placeholderImg, x, y, placeholderImg.width * scale, placeholderImg.height * scale);
 
-            // Rysowanie logo (jeśli włączone i załadowane)
             if (logoCheck.checked && userLogoImg) {
-                // Skala między "prawdziwym" rozmiarem wyjściowym a podglądem
-                // np. jeśli wyjście to 1920px, a podgląd ma 400px, to ratio = 400/1920
                 const previewRatio = previewWidth / targetDim.w;
 
-                const logoW = userLogoImg.width * previewRatio; // Logo skaluje się wizualnie
+                const logoW = userLogoImg.width * previewRatio;
                 const logoH = userLogoImg.height * previewRatio;
 
-                // Margines 3% (taki sam jak w logice processingu)
                 const marginX = previewWidth * 0.03;
                 const marginY = previewHeight * 0.03;
 
@@ -359,32 +503,21 @@
                         break;
                 }
 
-                // Cień pod logo dla lepszej widoczności w podglądzie
-                previewCtx.shadowColor = "rgba(0,0,0,0.3)";
-                previewCtx.shadowBlur = 5;
+                // Shadow for preview visibility
+                previewCtx.shadowColor = "rgba(0,0,0,0.1)";
+                previewCtx.shadowBlur = 4;
                 previewCtx.drawImage(userLogoImg, lx, ly, logoW, logoH);
                 previewCtx.shadowBlur = 0;
-            } else if (logoCheck.checked && !userLogoImg) {
-                // Info że brakuje logo
-                previewCtx.fillStyle = "rgba(0,0,0,0.5)";
-                previewCtx.fillRect(0, previewHeight - 30, previewWidth, 30);
-                previewCtx.fillStyle = "white";
-                previewCtx.font = "12px sans-serif";
-                previewCtx.textAlign = "center";
-                previewCtx.fillText("Wybierz plik logo, aby zobaczyć podgląd", previewWidth/2, previewHeight - 10);
             }
         }
 
-        // Helper do wymiarów
         function getTargetDimensions(origW, origH) {
             const val = resizeSelect.value;
             if (val === 'original') return { w: origW, h: origH };
-            
             const [w, h] = val.split('x').map(Number);
             return { w, h };
         }
 
-        // --- WYBÓR PLIKÓW ---
         btnSelectFiles.addEventListener('click', () => fileInput.click());
         btnSelectFolder.addEventListener('click', () => folderInput.click());
         
@@ -392,7 +525,6 @@
             if(e.target !== fileInput && e.target !== folderInput) fileInput.click();
         });
 
-        // Drag & Drop events
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
         });
@@ -414,36 +546,29 @@
                 let sizeMB = (Array.from(validFiles).reduce((acc, f) => acc + f.size, 0) / (1024*1024)).toFixed(1);
                 
                 fileCount.innerHTML = `
-                    <span class="text-green-600 font-bold">Wybrano: ${validFiles.length} plików</span>
-                    <span class="text-gray-400 text-xs block">Rozmiar całkowity: ${sizeMB} MB</span>
+                    <span class="text-success font-bold"><i class="fa-solid fa-check"></i> Wybrano: ${validFiles.length} plików</span>
+                    <span class="block mt-1">Rozmiar całkowity: ${sizeMB} MB</span>
                 `;
-
-                if (validFiles.length > 100) {
-                    alert("Wybrano dużo plików (" + validFiles.length + "). Przetwarzanie może chwilę potrwać. Prosimy o cierpliwość.");
-                }
             }
         }
 
-        // --- START PRZETWARZANIA ---
         processBtn.addEventListener('click', async () => {
             if (filesToProcess.length === 0) {
                 alert('Proszę najpierw wybrać pliki!');
                 return;
             }
 
-            // Blokada UI
             processBtn.disabled = true;
             processBtn.classList.add('opacity-75');
             progressContainer.classList.remove('hidden');
             
             const zip = new JSZip();
-            const format = formatSelect.value; // np. image/webp
+            const format = formatSelect.value;
             const quality = parseInt(qualityRange.value) / 100;
             const useLogo = logoCheck.checked && userLogoImg;
             const logoPos = logoPosition.value;
             const resizeMode = resizeSelect.value;
 
-            // Ustalenie rozszerzenia pliku
             let ext = ".jpg";
             if (format === "image/webp") ext = ".webp";
             if (format === "image/avif") ext = ".avif";
@@ -452,16 +577,12 @@
 
             for (let i = 0; i < filesToProcess.length; i++) {
                 const file = filesToProcess[i];
-                
                 statusText.textContent = `Przetwarzanie: ${file.name}`;
                 
                 try {
                     const blob = await processImage(file, format, quality, resizeMode, useLogo, userLogoImg, logoPos);
-                    
-                    // Nowa nazwa pliku
                     const oldName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
                     zip.file(`${oldName}${ext}`, blob);
-
                 } catch (err) {
                     console.error("Błąd pliku:", file.name, err);
                 }
@@ -471,22 +592,19 @@
                 progressBar.style.width = `${percent}%`;
                 percentText.textContent = `${percent}%`;
 
-                // Pauza dla UI (oddajemy sterowanie przeglądarce co 3 pliki)
                 if (i % 3 === 0) await new Promise(r => setTimeout(r, 10));
             }
 
-            // Pakowanie ZIP
-            statusText.textContent = "Kompresowanie archiwum ZIP...";
+            statusText.textContent = "Pakowanie archiwum ZIP...";
             try {
                 const content = await zip.generateAsync({ type: "blob" });
-                saveAs(content, `zoptymalizowane_${new Date().getTime()}.zip`);
+                saveAs(content, `webly_optimized_${new Date().getTime()}.zip`);
                 statusText.textContent = "Gotowe! Pobieranie...";
             } catch (e) {
                 statusText.textContent = "Błąd pakowania ZIP.";
-                alert("Wystąpił błąd przy tworzeniu ZIP. Może pliki są za duże dla pamięci przeglądarki?");
+                alert("Wystąpił błąd przy tworzeniu ZIP.");
             }
 
-            // Reset UI
             setTimeout(() => {
                 processBtn.disabled = false;
                 processBtn.classList.remove('opacity-75');
@@ -494,7 +612,6 @@
             }, 2000);
         });
 
-        // --- CORE LOGIC ---
         function processImage(file, mimeType, quality, resizeMode, useLogo, logoImg, logoPos) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -504,7 +621,6 @@
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
 
-                        // 1. Obliczanie wymiarów
                         let targetW, targetH;
                         
                         if (resizeMode === 'original') {
@@ -517,8 +633,6 @@
                         canvas.width = targetW;
                         canvas.height = targetH;
 
-                        // 2. Rysowanie Obrazu (Smart Crop / Fill)
-                        // Obliczamy skalę, aby wypełnić cały obszar (cover)
                         const scale = Math.max(targetW / img.width, targetH / img.height);
                         const x = (targetW / 2) - (img.width / 2) * scale;
                         const y = (targetH / 2) - (img.height / 2) * scale;
@@ -527,12 +641,10 @@
                         ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-                        // 3. Rysowanie Logo
                         if (useLogo && logoImg) {
                             const logoW = logoImg.width;
                             const logoH = logoImg.height;
                             
-                            // Margines 3% szerokości
                             const marginX = targetW * 0.03;
                             const marginY = targetH * 0.03;
 
@@ -563,10 +675,8 @@
                             ctx.drawImage(logoImg, lx, ly, logoW, logoH);
                         }
 
-                        // 4. Eksport
                         canvas.toBlob((blob) => {
                             if (!blob) reject("Canvas error");
-                            // Sprzątanie pamięci
                             canvas.width = 1; canvas.height = 1;
                             resolve(blob);
                         }, mimeType, quality);
